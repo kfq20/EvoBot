@@ -162,4 +162,5 @@ def test_discrim(model, loss_func, inputs):
                 #"mcc= {:.4f}".format(mcc.item()),
                 "auc= {:.4f}".format(Auc.item()),
                 )
+        return acc_test.item(), f1.item()
         # print('\n')

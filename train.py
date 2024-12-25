@@ -45,7 +45,7 @@ os.environ["WANDB_DISABLED"]="true"
 # os.environ["WANDB_DISABLED"]="true"
 
 PRECISION_MAPPING = {16: torch.float16, 32: torch.float32, 64: torch.float64}
-COMM = 6
+COMM = 7
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 bot_processed_data = f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 raw_data_folder = f"/home/fanqi/llm_simulation/data/raw_data/community_{COMM}/"
@@ -408,6 +408,8 @@ if __name__ == '__main__':
         
         '''sample dpo dataset'''
         dpo_data_path = f"{dpo_dataset_path}/community_{COMM}/dpo_dataset_{epoch}.jsonl"
+        if not os.path.exists(f"{dpo_dataset_path}/community_{COMM}/"):
+            os.makedirs(f"{dpo_dataset_path}/community_{COMM}/")
         if not os.path.exists(dpo_data_path):
             samples_per_gpu = int(dpo_dataset_size/batch_size) // num_gpus
             manager = Manager()
