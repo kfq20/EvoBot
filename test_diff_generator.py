@@ -1,32 +1,14 @@
-from datasets import load_dataset
-from trl import DPOConfig, DPOTrainer
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-import torch.distributed as dist
-import pandas as pd
 import torch
 from torch import nn
-from peft import (
-    LoraConfig,
-    get_peft_model,
-)
-from peft import PeftModel
 import json
 from models.discriminator import BotRGCN, train_discrim, test_discrim
-from models.generator import Generator
 from Dataset import Twibot22
-from data.raw_data.preprocess import extract_tweets_1, tweets_embedding
-from models.feature_extrator import Feature_extractor
-from utils.prompt_tempate import find_user_neighbors, llama_prompt
-from utils.merge_peft_adapters import merge_peft_adapters
-from utils.rewrite_bot_tweet import rewrite_all_bot_tweets, get_free_gpus
-from torch.multiprocessing import Process, Queue, set_start_method, Manager
 import random
 from tqdm import tqdm
 import os
-import re
 import numpy as np
 os.environ["WANDB_DISABLED"]="true"
-SEED = 3407
+SEED = 42
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -40,7 +22,7 @@ def set_seed(seed):
 # 设置随机种子
 set_seed(SEED)
 COMM = 5
-detector_version = "dpo_4"
+detector_version = "dpo_3"
 
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 detector_folder = f"/home/fanqi/llm_simulation/models/Detector/community_{COMM}/"
@@ -58,7 +40,7 @@ bot_inputs = [des_tensor1, tweets_tensor1, num_prop1, category_prop1, edge_index
 
 if __name__ == '__main__':
     all_inputs = {}
-    # all_inputs[f"{detector_version}"] = bot_inputs
+    all_inputs[f"{detector_version}"] = bot_inputs.copy()
     print(f"\n=== {detector_version} bot ===\n")
     
     model_discriminator = BotRGCN(cat_prop_size=config["discriminator"]["cat_prop_size"],
@@ -69,7 +51,7 @@ if __name__ == '__main__':
     if "dpo" in detector_version:
         raw_tweet_tensor = torch.load(processed_data_folder + "tweets_tensor.pt", weights_only=True).to(other_device)
         bot_inputs[1] = raw_tweet_tensor
-        # all_inputs["raw data"] = bot_inputs.copy()
+        all_inputs["raw data"] = bot_inputs.copy()
         for i in range(int(detector_version[-1])):
             if i == int(detector_version[-1]):
                 continue
@@ -81,11 +63,11 @@ if __name__ == '__main__':
                 loss_func=loss_func_discriminator,
                 optimizer=optimizer_discriminator,
                 epochs=config["discriminator"]["pretrain_epochs"],
-                inputs={f"{detector_version}": bot_inputs})
-    torch.save(model_discriminator.state_dict(), detector_folder + f'{detector_version}.pth')
+                inputs=all_inputs)
+    # torch.save(model_discriminator.state_dict(), detector_folder + f'{detector_version}.pth')
     test_discrim(model=model_discriminator,
                 loss_func=loss_func_discriminator,
-                inputs={f"{detector_version}": bot_inputs})
+                inputs={f"{detector_version}": all_inputs[f"{detector_version}"]})
 
     if "dpo" in detector_version:
         print(f"\n=== raw bot ===\n")
@@ -96,8 +78,8 @@ if __name__ == '__main__':
                     inputs={f"raw bot": bot_inputs})
         
     for epoch in [0,1,2,3,4]:
-        if epoch == int(detector_version[-1]):
-                continue
+        if "dpo" in detector_version and epoch == int(detector_version[-1]):
+            continue
         print(f"=== epoch: {epoch} ===")
         
         '''update tweets tensor'''
@@ -109,6 +91,3 @@ if __name__ == '__main__':
         test_discrim(model=model_discriminator,
                     loss_func=loss_func_discriminator,
                     inputs={f"DPO {epoch}": bot_inputs})
-        # exit()
-    
-

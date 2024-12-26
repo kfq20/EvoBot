@@ -19,7 +19,7 @@ def test_model_output(model_path, prompt, device):
     tokenizer.padding_side = "left"
     model.config.pad_token_id = tokenizer.pad_token_id
     inputs = tokenizer(prompt, padding=True, truncation=True, return_tensors="pt", max_length=1024).to(device)
-    output = model.generate(**inputs, max_new_tokens=1024, temperature=1.0, do_sample=True, repetition_penalty=1.3, pad_token_id = tokenizer.pad_token_id)
+    output = model.generate(**inputs, max_new_tokens=1024, temperature=0.7, do_sample=True, repetition_penalty=1.3, pad_token_id = tokenizer.pad_token_id)
     output_text = tokenizer.batch_decode(output, skip_special_tokens=True)
     processed_outputs = []
     for output in output_text:

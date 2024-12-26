@@ -14,7 +14,7 @@ class Generator(nn.Module):
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = 'left'
 
-    def generate_text(self, prompt, max_length=50, temperature=1.0, do_sample=False, repetition_penalty=1.0):
+    def generate_text(self, prompt, max_length=50, temperature=0.7, do_sample=False, repetition_penalty=1.0):
         inputs = self.tokenizer(prompt, padding=True, truncation=True, return_tensors="pt", max_length=2048).to(self.model.device)
         output = self.model.generate(**inputs, max_new_tokens=max_length//2, temperature=temperature, do_sample=do_sample, repetition_penalty=repetition_penalty, pad_token_id = self.tokenizer.pad_token_id)
         output_text = self.tokenizer.batch_decode(output, skip_special_tokens=True)

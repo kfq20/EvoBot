@@ -66,7 +66,7 @@ def tweets_embedding(each_user_tweets_path, community=2, dpo_epoch=None, output_
                     # noisy_tensor = total_each_person_tweets + noise
                     # tweets_list.append(noisy_tensor.squeeze())
                 # if dpo_epoch is not None:
-                #     split_index = int((dpo_epoch+1) * len(tweets_list)/5)
+                #     split_index = int((dpo_epoch+1) * len(tweets_list)/6)
                 #     shuffled_part = tweets_list[:split_index]
                 #     random.shuffle(shuffled_part)
                 #     tweets_list = shuffled_part + tweets_list[split_index:]

@@ -26,26 +26,12 @@ import random
 from tqdm import tqdm
 import os
 import re
-# SEED = 3401
-# def set_seed(seed):
-#     random.seed(seed)
-#     np.random.seed(seed)
-#     torch.manual_seed(seed)
-#     if torch.cuda.is_available():
-#         torch.cuda.manual_seed(seed)
-#         torch.cuda.manual_seed_all(seed)
-#     torch.backends.cudnn.deterministic = True
-#     torch.backends.cudnn.benchmark = False
-
-# # 设置随机种子
-# set_seed(SEED)
-# transformers.set_seed(42)
 
 os.environ["WANDB_DISABLED"]="true"
 # os.environ["WANDB_DISABLED"]="true"
 
 PRECISION_MAPPING = {16: torch.float16, 32: torch.float32, 64: torch.float64}
-COMM = 7
+COMM = 8
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 bot_processed_data = f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 raw_data_folder = f"/home/fanqi/llm_simulation/data/raw_data/community_{COMM}/"
@@ -159,8 +145,8 @@ def generate_data(gpu_id, queue, samples, model_path, model_discriminator, input
             prompt = llama_prompt(user_info, neighbor_infos)
             batch_prompt.append(prompt)
         with torch.no_grad(): 
-            batch_response_1 = model_generator.generate_text(batch_prompt, max_length=2048, temperature=1.0, do_sample=True, repetition_penalty=1.3)
-            batch_response_2 = model_generator.generate_text(batch_prompt, max_length=2048, temperature=1.0, do_sample=True, repetition_penalty=1.3)
+            batch_response_1 = model_generator.generate_text(batch_prompt, max_length=2048, temperature=0.7, do_sample=True, repetition_penalty=1.3)
+            batch_response_2 = model_generator.generate_text(batch_prompt, max_length=2048, temperature=0.7, do_sample=True, repetition_penalty=1.3)
             response_tensor = []
             for each_response in batch_response_1 + batch_response_2:
                 # if re.search(r'Tweet \d+:', each_response):
