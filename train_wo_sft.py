@@ -31,7 +31,7 @@ os.environ["WANDB_DISABLED"]="true"
 # os.environ["WANDB_DISABLED"]="true"
 
 PRECISION_MAPPING = {16: torch.float16, 32: torch.float32, 64: torch.float64}
-COMM = 7
+COMM = 5
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 bot_processed_data = f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 raw_data_folder = f"/home/fanqi/llm_simulation/data/raw_data/community_{COMM}/"
@@ -68,8 +68,8 @@ bot_dataset = Twibot22(root=bot_processed_data, device=other_device,process=Fals
 des_tensor,tweets_tensor,num_prop,category_prop,edge_index,edge_type,labels,train_idx,val_idx,test_idx=dataset.dataloader(tweets_path="tweets_tensor.pt")
 
 inputs=[des_tensor, tweets_tensor, num_prop, category_prop, edge_index, edge_type, labels, train_idx, val_idx, test_idx]
-model_path = f"/home/fanqi/llm_simulation/models/SFT/sft_merged_ckp_{COMM}"
-# model_path = 'NousResearch/Llama-2-7b-chat-hf'
+model_path = "NousResearch/Llama-2-7b-chat-hf"
+
 dpo_dataset_path = "/home/fanqi/llm_simulation/data/dpo_data"
 model_discriminator = BotRGCN(cat_prop_size=config["discriminator"]["cat_prop_size"],
                             embedding_dimension=config['discriminator']["embedding_dimension"]).to(other_device)
@@ -245,78 +245,7 @@ if __name__ == '__main__':
     test_discrim(model=model_discriminator,
                 loss_func=loss_func_discriminator,
                 inputs=all_inputs)
-    
-    '''======================'''
-    '''train on vanilla llama'''
 
-    replace_indexed_human_ids = random.sample(indexed_human_ids, 500)
-    # 分开索引和值
-    replaced_human_indices, replaced_human_ids = zip(*replace_indexed_human_ids)
-    print("Vanilla LLM results")
-    set_start_method('spawn', force=True) 
-    free_gpus = get_free_gpus()
-    print(f"Free GPUs found: {free_gpus}")
-    num_gpus = len(free_gpus)
-    vanilla_tweet_path = processed_data_folder + "id_tweet_vanilla.json"
-    if not os.path.exists(vanilla_tweet_path):
-        bot_ids_per_gpu = len(bot_ids) // num_gpus 
-        manager = Manager()
-        queue = manager.Queue()
-        processes = []
-        for i, gpu_id in enumerate(free_gpus):
-            start_idx = i * bot_ids_per_gpu
-            end_idx = start_idx + bot_ids_per_gpu
-            if i != num_gpus - 1:
-                bot_ids_gpu = bot_ids[start_idx:end_idx]
-            else:
-                bot_ids_gpu = bot_ids[start_idx:]
-            p = Process(target=rewrite_all_bot_tweets, args=(gpu_id, "NousResearch/Llama-2-7b-chat-hf", bot_ids_gpu, COMM, queue))
-            processes.append(p)
-            p.start()
-        for p in processes:
-            p.join()
-        all_new_tweets = [None] * num_gpus
-        while not queue.empty():
-            gpu_id, responses = queue.get()
-            all_new_tweets[free_gpus.index(gpu_id)] = responses
-        all_new_tweets = [response for responses in all_new_tweets for response in responses]
-        print(f"\n===== REPLACED TWEET NUM: {len(all_new_tweets)}======\n")
-        
-        replaced_tweet_dict = {tweet["author_id"]: tweet["text"] for tweet in all_new_tweets}
-        replaced_tweets = []
-        for user_index in all_tweets:
-            if int(user_index) in bot_indices: # replaced bot
-                replaced_tweets.append({user_index: replaced_tweet_dict[user_ids[int(user_index)]]})
-            else:
-                replaced_tweets.append({user_index: all_tweets[user_index]})
-        id_replaced_tweets = {k: v for d in replaced_tweets for k, v in d.items()}
-        with open(vanilla_tweet_path, "w", encoding="utf-8") as f:
-            json.dump(id_replaced_tweets, f, indent=4, ensure_ascii=False)
-
-    # process replaced tweet
-    vanilla_tweets_tensor_path = processed_data_folder + "tweets_tensor_vanilla.pt"
-    if not os.path.exists(vanilla_tweets_tensor_path):
-        tweets_embedding(each_user_tweets_path=vanilla_tweet_path,
-                          output_path=vanilla_tweets_tensor_path,
-                          community=COMM, device=other_device)
-    updated_tweets_tensor=torch.load(vanilla_tweets_tensor_path).to(other_device)
-    inputs[1] = updated_tweets_tensor
-    # all_inputs["vanilla bot"] = inputs.copy()
-    # print(f"\n=== Train detector on vanilla LLM ===\n")
-    # model_discriminator = BotRGCN(cat_prop_size=config["discriminator"]["cat_prop_size"],
-    #                         embedding_dimension=config['discriminator']["embedding_dimension"]).to(other_device)
-    # optimizer_discriminator = torch.optim.AdamW(model_discriminator.parameters(),
-    #                     lr=config["discriminator"]["lr"],weight_decay=config["discriminator"]["weight_decay"])
-    # train_discrim(model=model_discriminator,
-    #         loss_func=loss_func_discriminator,
-    #         optimizer=optimizer_discriminator,
-    #         epochs=config["discriminator"]["pretrain_epochs"],
-    #         inputs=all_inputs)
-    # # torch.save(model_discriminator.state_dict(), detector_folder + f'origin_bot_dataset_comm_{COMM}.pth')
-    # test_discrim(model=model_discriminator,
-    #             loss_func=loss_func_discriminator,
-    #             inputs=all_inputs)
-    
     '''======================'''
     '''Start main training loop'''
 
@@ -330,7 +259,7 @@ if __name__ == '__main__':
         print(f"=== epoch: {epoch} ===")
 
         '''use the sft model or dpo model to rewrite the replaced human tweet'''
-        dpo_replaced_tweet_path = processed_data_folder + f"id_tweet_dpo_{epoch}.json"
+        dpo_replaced_tweet_path = processed_data_folder + f"id_tweet_dpo_{epoch}_wo_sft.json"
         if not os.path.exists(dpo_replaced_tweet_path):
             bot_ids_per_gpu = len(bot_ids) // num_gpus 
             manager = Manager()
@@ -367,7 +296,7 @@ if __name__ == '__main__':
                 json.dump(id_replaced_tweets, f, indent=4, ensure_ascii=False)
         
         '''update tweets tensor'''
-        updated_tweets_tensor_path = processed_data_folder + f"tweets_tensor_dpo_{epoch}.pt"
+        updated_tweets_tensor_path = processed_data_folder + f"tweets_tensor_dpo_{epoch}_wo_sft.pt"
         if not os.path.exists(updated_tweets_tensor_path):
             tweets_embedding(each_user_tweets_path=dpo_replaced_tweet_path, 
                              output_path=updated_tweets_tensor_path,
@@ -393,7 +322,7 @@ if __name__ == '__main__':
         # exit()
         
         '''sample dpo dataset'''
-        dpo_data_path = f"{dpo_dataset_path}/community_{COMM}/dpo_dataset_{epoch}.jsonl"
+        dpo_data_path = f"{dpo_dataset_path}/community_{COMM}/dpo_dataset_{epoch}_wo_sft.jsonl"
         if not os.path.exists(f"{dpo_dataset_path}/community_{COMM}/"):
             os.makedirs(f"{dpo_dataset_path}/community_{COMM}/")
         if not os.path.exists(dpo_data_path):
@@ -418,7 +347,7 @@ if __name__ == '__main__':
             print(f"==== Successfully build dpo dataset! ====")
 
         ''' DPO training '''
-        dpo_model_path = f"/home/fanqi/llm_simulation/models/DPO/community_{COMM}/merged_ckp_{epoch}"
+        dpo_model_path = f"/home/fanqi/llm_simulation/models/DPO/community_{COMM}/merged_ckp_{epoch}_wo_sft"
         if not os.path.exists(dpo_model_path):
             model_args = {
                 "torch_dtype": PRECISION_MAPPING[config["llm_model"]["precision_bits"]],
@@ -435,12 +364,11 @@ if __name__ == '__main__':
                                     max_length=2048
                                     )
             DPO_trainer.train()
-            DPO_trainer.save_model(f"/home/fanqi/llm_simulation/models/DPO/community_{COMM}/result_{epoch}")
+            DPO_trainer.save_model(f"/home/fanqi/llm_simulation/models/DPO/community_{COMM}/result_{epoch}_wo_sft")
             # DPO_trainer.model.save_pretrained(f"/home/fanqi/llm_simulation/models/DPO/DPO_ckp_{epoch}")
             # model_generator.tokenizer.save_pretrained(f"/home/fanqi/llm_simulation/models/DPO/DPO_ckp_{epoch}")
 
             # update generator
-            merge_peft_adapters(adapter_dir=f"/home/fanqi/llm_simulation/models/DPO/community_{COMM}/result_{epoch}", output_path=dpo_model_path)
+            merge_peft_adapters(adapter_dir=f"/home/fanqi/llm_simulation/models/DPO/community_{COMM}/result_{epoch}_wo_sft", output_path=dpo_model_path)
         model_path = dpo_model_path
         # exit()
-

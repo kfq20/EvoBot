@@ -22,12 +22,12 @@ def set_seed(seed):
 # 设置随机种子
 set_seed(SEED)
 COMM = 5
-detector_version = "dpo_3"
+detector_version = "raw bot"
 
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 detector_folder = f"/home/fanqi/llm_simulation/models/Detector/community_{COMM}/"
 
-other_device = "cuda:0"
+other_device = "cuda:4"
 with open("/home/fanqi/llm_simulation/config.json", "r") as config_file:
     config = json.load(config_file)
 
@@ -67,7 +67,15 @@ if __name__ == '__main__':
     # torch.save(model_discriminator.state_dict(), detector_folder + f'{detector_version}.pth')
     test_discrim(model=model_discriminator,
                 loss_func=loss_func_discriminator,
-                inputs={f"{detector_version}": all_inputs[f"{detector_version}"]})
+                inputs={f"{detector_version}": all_inputs[detector_version]})
+    
+    vanilla_tweets_tensor_path = processed_data_folder + f"tweets_tensor_vanilla.pt"
+    vanilla_tweets_tensor=torch.load(vanilla_tweets_tensor_path, weights_only=True).to(other_device)
+    bot_inputs[1] = vanilla_tweets_tensor
+    test_discrim(model=model_discriminator,
+                    loss_func=loss_func_discriminator,
+                    inputs={f"vanilla llama": bot_inputs})
+
 
     if "dpo" in detector_version:
         print(f"\n=== raw bot ===\n")

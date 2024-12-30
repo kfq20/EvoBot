@@ -29,7 +29,7 @@
         "dropout":0.1,
         "lr":1e-3,
         "weight_decay":0.1,
-        "pretrain_epochs": 50
+        "pretrain_epochs": 100
     },
     "peft":{
         "r": 64,
