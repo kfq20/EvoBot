@@ -115,6 +115,7 @@ def accuracy(output, labels):
             return correct / len(labels)
 
 def train_discrim(model, loss_func, optimizer, epochs, inputs):
+    acc_train, loss_train = 0, 0
     for epoch in range(epochs):
         model.train()
         total_acc_train, total_acc_val, total_loss = 0, 0, 0
@@ -140,6 +141,8 @@ def train_discrim(model, loss_func, optimizer, epochs, inputs):
 
 
 def test_discrim(model, loss_func, inputs):
+    avg_acc = 0
+    avg_f1 = 0
     model.eval()
     for name, input in inputs.items():
         des_tensor,tweets_tensor,num_prop,category_prop,edge_index,edge_type,labels,train_idx,val_idx,test_idx = input[0],input[1],input[2],input[3],input[4],input[5],input[6],input[7],input[8], input[9]
@@ -162,5 +165,6 @@ def test_discrim(model, loss_func, inputs):
                 #"mcc= {:.4f}".format(mcc.item()),
                 "auc= {:.4f}".format(Auc.item()),
                 )
-        return acc_test.item(), f1.item()
-        # print('\n')
+        avg_acc += acc_test.item()
+        avg_f1 += f1.item()
+    return avg_acc / len(inputs), avg_f1 / len(inputs)
