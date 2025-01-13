@@ -21,11 +21,11 @@ def set_seed(seed):
 set_seed(SEED)
 
 PRECISION_MAPPING = {16: torch.float16, 32: torch.float32, 64: torch.float64}
-COMM = 7
-detector_version = "origin"
+COMM = 8
+detector_version = "original"
 test_comm_num = 12
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
-device = "cuda:4"
+device = "cuda:7"
 
 with open("/home/fanqi/llm_simulation/config.json", "r") as config_file:
     config = json.load(config_file)

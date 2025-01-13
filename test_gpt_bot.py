@@ -22,12 +22,12 @@ with open("/home/fanqi/llm_simulation/config.json", "r") as config_file:
 
 dataset=Twibot22(root=processed_data_folder,device=other_device,process=False,save=False)
 
-des_tensor,tweets_tensor,num_prop,category_prop,edge_index,edge_type,labels,train_idx,val_idx,test_idx=dataset.dataloader(tweets_path="tweets_tensor.pt")
+des_tensor,tweets_tensor,num_prop,category_prop,edge_index,edge_type,labels,train_idx,val_idx,test_idx=dataset.dataloader(tweets_path="tweets_tensor_dpo_4.pt")
 
 inputs=[des_tensor, tweets_tensor, num_prop, category_prop, edge_index, edge_type, labels, train_idx, val_idx, test_idx]
 
 if __name__ == '__main__':
-    all_inputs = {"original bot": inputs.copy()}
+    all_inputs = {"final": inputs.copy()}
 
     '''Pretrain discriminator on raw data'''
 
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     test_discrim(model=model_discriminator,
                 loss_func=loss_func_discriminator,
                 inputs=all_inputs)
-    
+    exit()
     gpt_tweet_path = processed_data_folder + "id_tweet_dpo_4_wo_sft.json"
     gpt_tweets_tensor_path = processed_data_folder + "tweets_tensor_dpo_4_wo_sft.pt"
     if not os.path.exists(gpt_tweets_tensor_path):

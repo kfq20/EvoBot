@@ -42,7 +42,7 @@ from collections import Counter
 # 创建翻译器实例
 # translator = Translator()
 
-for comm in [2]:
+for comm in [5]:
 # 读取 JSON 文件
     input_file = f"/home/fanqi/llm_simulation/data/raw_data/community_{comm}/tweet.json"
     output_file = f"/home/fanqi/llm_simulation/data/raw_data/community_{comm}/translated_hashtags.json"
