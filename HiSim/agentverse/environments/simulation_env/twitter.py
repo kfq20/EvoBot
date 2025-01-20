@@ -25,6 +25,7 @@ from torch.multiprocessing import Process, Queue, set_start_method, Manager
 import torch
 from tqdm import tqdm
 import re
+import yaml
 from dateutil.relativedelta import relativedelta
 # import mesa
 
@@ -272,11 +273,15 @@ class TwitterEnvironment(BaseEnvironment):
             opinion = {}
             for agent in self.abm_model.schedule.agents:
                 opinion[agent.name] = agent.att[-1]
-            data['opinion_results'] = opinion
+            data[f'opinion_results_{self.cnt_turn}'] = opinion
         output_path = self.output_path
         print('Output to {}'.format(output_path))
-        with open(output_path,'wb') as f:
-            pickle.dump(data, f)
+        if 'pkl' in output_path:
+            with open(output_path,'wb') as f:
+                pickle.dump(data, f)
+        elif 'yaml' in output_path:
+            with open(output_path, 'a') as f:
+                yaml.dump(data, f)
 
     def check_tweet(self, env_descptions):
         cnt_turn = self.cnt_turn

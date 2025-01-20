@@ -7,6 +7,7 @@ import random
 import matplotlib.pyplot as plt
 from agentverse.abm_model import abm_registry
 from agentverse.logging import get_logger
+import json
 
 logger = get_logger()
 
@@ -46,7 +47,11 @@ class BCAgent(mesa.Agent):
         candidate_agents = []
         for agent in self.model.schedule.agents:
             # exclude the agent itself
-            if agent == self:continue
+            if agent == self:
+                continue
+            # exclude the agent i doesn't follow
+            if agent.name not in self.model.agent_network.get(self.name, []):
+                continue
             if abs(att-agent.att[-1])<self.bc_bound:
                 candidate_agents.append(agent)
         # randomly sample
@@ -67,10 +72,13 @@ class BCAgent(mesa.Agent):
 class BCModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, agent_config_lst, order = 'concurrent', alpha=0.1, bc_bound=0.1,llm_agents_atts=[]):
+    def __init__(self, agent_config_lst, following_info, order = 'concurrent', alpha=0.1, bc_bound=0.1,llm_agents_atts=[]):
         super().__init__()
         self.num_agents = len(agent_config_lst)
         self.llm_agents_atts = llm_agents_atts
+        with open(following_info, 'r', encoding='utf-8') as f:
+            agent_network = json.load(f)
+        self.agent_network = agent_network
         self.name2idx = {}
         # Create scheduler and assign it to the model
         if order =='concurrent':
