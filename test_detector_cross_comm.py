@@ -18,11 +18,11 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-set_seed(SEED)
+# set_seed(SEED)
 
 PRECISION_MAPPING = {16: torch.float16, 32: torch.float32, 64: torch.float64}
-COMM = 8
-detector_version = "original"
+COMM = 0
+detector_version = "dpo_4"
 test_comm_num = 12
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 device = "cuda:7"

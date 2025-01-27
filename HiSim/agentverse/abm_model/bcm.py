@@ -10,6 +10,14 @@ from agentverse.logging import get_logger
 import json
 
 logger = get_logger()
+# external_field = [(0.013033, 0.406997),
+#                   (0.015412, 0.552411),
+#                   (-0.063455, 0.462709),
+#                   (0.057049, 0.478888),
+#                   (0.143577, 0.540539),
+#                   (-0.132960, 0.457606),
+#                   (-0.039737, 0.451614),
+#                   (-0.078328, 0.464655)]
 
 
 class BCAgent(mesa.Agent):
@@ -32,6 +40,7 @@ class BCAgent(mesa.Agent):
         # strength of the social influence
         self.alpha = alpha
         self.bc_bound = bc_bound
+        self.steps = 0
         
 
     def step(self):
@@ -57,16 +66,20 @@ class BCAgent(mesa.Agent):
         # randomly sample
         if len(candidate_agents):
             target_agent = random.choice(candidate_agents)
-            sim = 1
             att_update = target_agent.att[-1]-att
         else:
-            sim = 0 
-            att_update = 0
+            target_agent = random.choice(self.model.schedule.agents)
+            att_update = target_agent.att[-1]-att
+            # att_update = np.random.normal(0, 0.1)
+            # att_update = 0
+
         att = att + self.alpha * att_update
         self.att.append(att)
 #         print(self.name, att)
-
-
+        self.steps += 1
+        # if self.steps % 3 == 0:
+        #     mean, std = external_field[int(self.steps / 3) - 1]
+        #     self.att[-1] = 0.5*self.att[-1] + 0.5*np.random.normal(mean, std)
 
 @abm_registry.register("bcm")
 class BCModel(mesa.Model):

@@ -31,7 +31,7 @@ os.environ["WANDB_DISABLED"]="true"
 # os.environ["WANDB_DISABLED"]="true"
 
 PRECISION_MAPPING = {16: torch.float16, 32: torch.float32, 64: torch.float64}
-COMM = 2
+COMM = 0
 processed_data_folder=f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 bot_processed_data = f"/home/fanqi/llm_simulation/data/processed_data/community_{COMM}/"
 raw_data_folder = f"/home/fanqi/llm_simulation/data/raw_data/community_{COMM}/"

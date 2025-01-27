@@ -10,7 +10,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_curve,auc
 
 class BotRGCN(nn.Module):
-    def __init__(self,des_size=768,tweet_size=768,num_prop_size=5,cat_prop_size=3,embedding_dimension=128,dropout=0.3):
+    def __init__(self, des_size=768, tweet_size=768, num_prop_size=5, cat_prop_size=3, embedding_dimension=128, dropout=0.3):
         super(BotRGCN, self).__init__()
         self.dropout = dropout
         self.linear_relu_des=nn.Sequential(
@@ -35,6 +35,7 @@ class BotRGCN(nn.Module):
             nn.LeakyReLU()
         )
         
+        # RGCNConv layer for relational graph convolution, num_relations=2 indicates two types of relations in the graph
         self.rgcn=RGCNConv(embedding_dimension,embedding_dimension,num_relations=2)
         
         self.linear_relu_output1=nn.Sequential(
@@ -44,6 +45,7 @@ class BotRGCN(nn.Module):
         self.linear_output2=nn.Linear(int(embedding_dimension/2),2)
         
     def forward(self,des,tweet,num_prop,cat_prop,edge_index,edge_type):
+        assert des.shape[0] == tweet.shape[0] == num_prop.shape[0] == cat_prop.shape[0], "All input tensors must have the same batch size"
         d=self.linear_relu_des(des)
         t=self.linear_relu_tweet(tweet)
         n=self.linear_relu_num_prop(num_prop)

@@ -25,6 +25,11 @@ followers_dict = (
     .apply(list)
     .to_dict()
 )
+followers_dict_2  = (
+    filtered_data.groupby('target_id')['source_id']
+    .apply(list)
+    .to_dict()
+)
 
 # 筛选 relation 为 followers 的记录，且 source_id 和 target_id 都在 user_list 中
 following_data = edge_data[
@@ -40,6 +45,12 @@ following_dict = (
     .to_dict()
 )
 
+following_dict_2 = (
+    following_data.groupby('source_id')['target_id']
+    .apply(list)
+    .to_dict()
+)
+
 # 遍历 followings_dict，将其补充到 followers_dict 中
 for key, value in following_dict.items():
     if key in followers_dict:
@@ -47,6 +58,17 @@ for key, value in following_dict.items():
     else:
         followers_dict[key] = value  # 如果 key 不存在，直接添加
 
+for key, value in following_dict_2.items():
+    if key in followers_dict:
+        followers_dict[key].extend(value)  # 如果 key 存在，将 value 合并
+    else:
+        followers_dict[key] = value  # 如果 key 不存在，直接添加
+
+for key, value in followers_dict_2.items():
+    if key in followers_dict:
+        followers_dict[key].extend(value)  # 如果 key 存在，将 value 合并
+    else:
+        followers_dict[key] = value  # 如果 key 不存在，直接添加
 # 打印合并后的字典
 print(followers_dict)
 

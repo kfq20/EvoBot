@@ -29,7 +29,7 @@ import yaml
 from dateutil.relativedelta import relativedelta
 # import mesa
 
-MODEL = "/home/fanqi/llm_simulation/models/DPO/community_7/merged_ckp_4"
+MODEL = "/home/fanqi/llm_simulation/models/DPO/community_5/merged_ckp_4"
 # MODEL = "NousResearch/Llama-2-7b-chat-hf"
 
 def get_free_gpus():
@@ -161,7 +161,9 @@ class TwitterEnvironment(BaseEnvironment):
         super().__init__(rule=rule, **kwargs)
         self.rule.update_visible_agents(self)
 
-        self.abm_model = kwargs['abm_model']
+        if kwargs.get('abm_model') is not None:
+            self.abm_model = kwargs['abm_model']
+        
 
     async def step(self) -> List[Message]:
         """Run one step of the environment"""

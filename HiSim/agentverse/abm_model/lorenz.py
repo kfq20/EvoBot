@@ -10,6 +10,7 @@ import random
 import matplotlib.pyplot as plt
 from agentverse.abm_model import abm_registry
 from agentverse.logging import get_logger
+import json
 
 logger = get_logger()
 
@@ -25,7 +26,7 @@ class LorenzAgent(mesa.Agent):
         """
         """
         
-        super().__init__(unique_id, model)
+        super().__init__(model)
         
         self.name = name
         # initial attitude
@@ -59,28 +60,45 @@ class LorenzAgent(mesa.Agent):
         att_update = 0
         candidate_agents = []
         for agent in self.model.schedule.agents:
-            if agent !=self:candidate_agents.append(agent)
-        target_agent = random.choice(candidate_agents)
-        m_jt = target_agent.att[-1]
-        sim = pow(self.lamda, self.k)/(pow(self.lamda, self.k)+pow(abs(m_jt-att), self.k))
-        pol = (pow(self.M, 2)-pow(att, 2))/pow(self.M, 2)
-        asm = m_jt-att
-        ref = m_jt
-        att_update = self.alpha*pol*sim*(self.tho*asm+(1-self.tho)*ref)
+            if agent == self:
+                continue
+            if agent.name not in self.model.agent_network.get(self.name, []):
+                continue
+            else:
+                candidate_agents.append(agent)
+        if len(candidate_agents):
+            target_agent = random.choice(candidate_agents)
+            m_jt = target_agent.att[-1]
+            sim = pow(self.lamda, self.k)/(pow(self.lamda, self.k)+pow(abs(m_jt-att), self.k))
+            pol = (pow(self.M, 2)-pow(att, 2))/pow(self.M, 2)
+            asm = m_jt-att
+            ref = m_jt
+            att_update = self.alpha*pol*sim*(self.tho*asm+(1-self.tho)*ref)
+        else:
+            target_agent = random.choice(self.model.schedule.agents)
+            m_jt = target_agent.att[-1]
+            sim = pow(self.lamda, self.k)/(pow(self.lamda, self.k)+pow(abs(m_jt-att), self.k))
+            pol = (pow(self.M, 2)-pow(att, 2))/pow(self.M, 2)
+            asm = m_jt-att
+            ref = m_jt
+            att_update = self.alpha*pol*sim*(self.tho*asm+(1-self.tho)*ref)
         
         att = att + att_update
         self.att.append(att)
-#         print(self.name, att)
+        # print(self.name, att)
 
 
 @abm_registry.register("lorenz")
 class LorenzModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self, agent_config_lst, order, alpha, lamda, k, M, tho, llm_agents_atts):
+    def __init__(self, agent_config_lst, following_info, order, alpha, lamda, k, tho, M=1, llm_agents_atts=[]):
         super().__init__()
         self.num_agents = len(agent_config_lst)
         self.llm_agents_atts = llm_agents_atts
+        with open(following_info, 'r', encoding='utf-8') as f:
+            agent_network = json.load(f)
+        self.agent_network = agent_network
         self.name2idx = {}
         # Create scheduler and assign it to the model
         if order =='concurrent':

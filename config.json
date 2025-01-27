@@ -25,11 +25,11 @@
     },
     "discriminator":{
         "cat_prop_size":3,
-        "embedding_dimension":128,
+        "embedding_dimension":256,
         "dropout":0.1,
-        "lr":1e-3,
+        "lr":7e-4,
         "weight_decay":0.1,
-        "pretrain_epochs": 100
+        "pretrain_epochs": 250
     },
     "peft":{
         "r": 64,

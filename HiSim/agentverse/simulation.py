@@ -34,7 +34,7 @@ class Simulation:
                 agent = load_agent(agent_configs)
                 agents.append(agent)
        
-        if "abm_model" in task_config:
+        if task_config.get("abm_model") is not None:
             abm_config = task_config["abm_model"]
 
             abm_model = load_abm_model(abm_config)
@@ -42,7 +42,7 @@ class Simulation:
         # Build the environment
         env_config = task_config["environment"]
         env_config["agents"] = agents
-        if "abm_model" in task_config:
+        if task_config.get("abm_model") is not None:
             env_config['abm_model'] = abm_model
         environment = load_environment(env_config)
 
