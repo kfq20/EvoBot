@@ -1,0 +1,38 @@
+{
+    "generator_training":{
+        "batch_size": 4,
+        "epoch": 5
+    },
+    "DPO_trainer": {
+        "beta": 0.2,
+        "output_dir": "./models/DPO",
+        "per_device_train_batch_size":1,
+        "per_device_eval_batch_size":1,
+        "save_steps":1000,
+        "save_total_limit":1,
+        "logging_strategy":"steps",
+        "logging_steps":100
+    },
+    "DPO_dataset_size":1024,
+    "feature_extractor":{
+        "model": "roberta-base",
+        "max_length": 512
+    },
+    "discriminator":{
+        "cat_prop_size":3,
+        "embedding_dimension":256,
+        "dropout":0.1,
+        "lr":1e-3,
+        "weight_decay":0.1,
+        "pretrain_epochs": 120
+    },
+    "peft":{
+        "r": 64,
+        "lora_alpha":16,
+        "lora_dropout": 0.1,
+        "target_modules":["q_proj", "k_proj","v_proj","o_proj"],
+        "task_type":"CAUSAL_LM",
+        "bias":"none"
+    }
+    
+}
