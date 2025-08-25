@@ -1,6 +1,9 @@
 
 # EvoBot: Advancing LLM-based Social Bot Generation and Its Detection through an Adversarial Learning Framework
 
+
+🎉 **2025/08/21** We are thrilled to announce that `EvoBot` has been accepted to the **EMNLP 2025 Main Conference**!
+
 This repository contains the code for EvoBot, a novel adversarial learning framework where an LLM-based social bot (EvoBot) and a graph-based detector are co-adapted. EvoBot learns to generate increasingly human-like content, while the Detector simultaneously improves its ability to distinguish bot-generated content from human text.
 
 The training process consists of two main phases:
